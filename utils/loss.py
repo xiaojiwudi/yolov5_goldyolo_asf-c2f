@@ -9,7 +9,9 @@ from utils.torch_utils import de_parallel
 
 
 def smooth_BCE(eps=0.1):
-    """Returns label smoothing BCE targets for reducing overfitting; pos: `1.0 - 0.5*eps`, neg: `0.5*eps`. For details see https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441."""
+    """Returns label smoothing BCE targets for reducing overfitting; pos: `1.0 - 0.5*eps`, neg: `0.5*eps`. For details
+    see https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441.
+    """
     return 1.0 - 0.5 * eps, 0.5 * eps
 
 
@@ -156,7 +158,7 @@ class ComputeLoss:
                 pxy = pxy.sigmoid() * 2 - 0.5
                 pwh = (pwh.sigmoid() * 2) ** 2 * anchors[i]
                 pbox = torch.cat((pxy, pwh), 1)  # predicted box
-                
+
                 iou = bbox_iou(pbox, tbox[i], CIoU=True).squeeze()  # iou(prediction, target)
                 # Objectness
                 iou = iou.detach().clamp(0).type(tobj.dtype)
