@@ -1,21 +1,23 @@
 import cv2
-import torch
 import numpy as np
-from pathlib import Path
+import torch
+
 from models.common import DetectMultiBackend
-from utils.general import non_max_suppression, check_img_size
+from utils.general import check_img_size, non_max_suppression
 from utils.torch_utils import select_device
 
+
 def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None):
-    """
-    将检测框从模型输入图像的尺寸映射到原始图像的尺寸。
+    """将检测框从模型输入图像的尺寸映射到原始图像的尺寸。.
+
     Args:
         img1_shape (tuple): 模型输入图像的尺寸 (height, width)
         coords (torch.Tensor): 检测框坐标 [x1, y1, x2, y2]
         img0_shape (tuple): 原始图像的尺寸 (height, width)
-        ratio_pad (tuple, optional): 缩放比例和填充 (ratio, pad)
+        ratio_pad (tuple, optional): 缩放比例和填充 (ratio, pad).
+
     Returns:
-        torch.Tensor: 映射到原始图像的检测框坐标
+        torch.Tensor: 映射到原始图像的检测框坐标.
     """
     if ratio_pad is None:  # 默认计算缩放比例和填充
         gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # 缩放比例
@@ -29,16 +31,17 @@ def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None):
     coords[:, :4] = coords[:, :4].clamp(min=0, max=max(img0_shape))  # 限制坐标范围
     return coords
 
+
 class CameraDetect:
     def __init__(self, weights, device="cpu", imgsz=640, conf_thres=0.25, iou_thres=0.45):
-        """
-        初始化摄像头检测类
+        """初始化摄像头检测类.
+
         Args:
             weights (str): YOLOv5模型权重文件路径
             device (str): 使用的设备（如 'cpu' 或 'cuda:0'）
             imgsz (int): 输入图像大小
             conf_thres (float): 置信度阈值
-            iou_thres (float): IoU阈值
+            iou_thres (float): IoU阈值.
         """
         self.device = select_device(device)
         self.model = DetectMultiBackend(weights, device=self.device)
@@ -48,12 +51,13 @@ class CameraDetect:
         self.names = self.model.names
 
     def preprocess(self, img):
-        """
-        图像预处理
+        """图像预处理.
+
         Args:
             img (np.ndarray): 输入图像
+
         Returns:
-            torch.Tensor: 预处理后的图像
+            torch.Tensor: 预处理后的图像.
         """
         img = cv2.resize(img, (self.imgsz, self.imgsz))
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, HWC to CHW
@@ -65,12 +69,13 @@ class CameraDetect:
         return img
 
     def detect(self, frame):
-        """
-        检测目标
+        """检测目标.
+
         Args:
             frame (np.ndarray): 输入图像帧
+
         Returns:
-            np.ndarray: 带检测结果的图像帧
+            np.ndarray: 带检测结果的图像帧.
         """
         img = self.preprocess(frame)
         pred = self.model(img, augment=False)
@@ -86,14 +91,14 @@ class CameraDetect:
 
     @staticmethod
     def plot_one_box(x, img, color=(255, 0, 0), label=None, line_thickness=3):
-        """
-        绘制检测框
+        """绘制检测框.
+
         Args:
             x (list): 检测框坐标 [x1, y1, x2, y2]
             img (np.ndarray): 图像
             color (tuple): 检测框颜色
             label (str): 标签
-            line_thickness (int): 线条粗细
+            line_thickness (int): 线条粗细.
         """
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
         cv2.rectangle(img, c1, c2, color, thickness=line_thickness, lineType=cv2.LINE_AA)
@@ -102,7 +107,17 @@ class CameraDetect:
             t_size = cv2.getTextSize(label, 0, fontScale=line_thickness / 3, thickness=font_thickness)[0]
             c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
             cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
-            cv2.putText(img, label, (c1[0], c1[1] - 2), 0, line_thickness / 3, (255, 255, 255), thickness=font_thickness, lineType=cv2.LINE_AA)
+            cv2.putText(
+                img,
+                label,
+                (c1[0], c1[1] - 2),
+                0,
+                line_thickness / 3,
+                (255, 255, 255),
+                thickness=font_thickness,
+                lineType=cv2.LINE_AA,
+            )
+
 
 def main():
     print("[INFO] 初始化摄像头检测")
@@ -128,11 +143,12 @@ def main():
         cv2.imshow("YOLOv5 Detection", frame)
 
         # 按 'q' 键退出
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
